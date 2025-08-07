@@ -1,0 +1,14 @@
+version: '3'
+
+volumes:
+  postgis17_data:
+
+services:
+  db:
+    image: postgis/postgis:17-3.5-alpine
+    ports:
+      - 5555:5432
+    volumes:
+      - postgis17_data:/var/lib/postgresql/data/
+    env_file:
+      - docker.env
