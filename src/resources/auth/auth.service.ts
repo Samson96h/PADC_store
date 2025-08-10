@@ -3,18 +3,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User } from 'src/entityes/user.entity';
+import { User } from 'src/entities/user.entity';
 import { RegisterDTO } from './dto/register.dto';
 import { LoginDTO } from './dto/login.dto';
-import { ForgetPasswordDTO } from './dto/forget_password.dto';
+import { ForgetPasswordDTO } from './dto/forget-password.dto';
+import { SecretCode } from 'src/entities/secret.entiy';
+import { CodeCheckingDTO } from './dto/code-checking.dto';
+import { NewPasswordDTO } from './dto/new-password.dto';
 
 @Injectable()
 export class AuthService {
     constructor(
+        @InjectRepository(SecretCode)
+        private readonly secretRepository: Repository<SecretCode>,
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
         private readonly jwtService: JwtService,
     ) { }
+
 
     async register(registerDto: RegisterDTO): Promise<{ access_token: string }> {
         const existing = await this.userRepository.findOne({ where: { email: registerDto.email } });
@@ -27,9 +33,11 @@ export class AuthService {
         const savedUser = await this.userRepository.save(newUser);
 
         const payload = { sub: savedUser.id, email: savedUser.email };
-        const access_token = this.jwtService.sign(payload);
 
-        return { access_token };
+        return {
+            access_token: this.jwtService.sign(payload,
+                { secret: process.env.JWT_SECRET, })
+        };
     }
 
     async login(loginDto: LoginDTO): Promise<{ access_token: string }> {
@@ -44,24 +52,76 @@ export class AuthService {
         }
 
         const payload = { sub: user.id, email: user.email };
-        return { access_token: this.jwtService.sign(payload) };
+        return {
+            access_token: this.jwtService.sign(payload,
+                { secret: process.env.JWT_SECRET, })
+        };
     }
 
-    async forget_password(forgetPasswordDto: ForgetPasswordDTO): Promise<{ access_token: string }> {
+
+    async forgetPassword(forgetPasswordDto: ForgetPasswordDTO): Promise<{ access_token: string; code: number }> {
         const user = await this.userRepository.findOne({ where: { email: forgetPasswordDto.email } });
         if (!user) {
             throw new UnauthorizedException('User not found');
         }
-        if (forgetPasswordDto.firstName !== user.firstName) {
-            throw new UnauthorizedException('Invalid identity confirmation');
-        }
 
-        const hashedPassword = await bcrypt.hash(forgetPasswordDto.newPassword, 10);
-        user.password = hashedPassword;
+        await this.secretRepository.delete({ user: { id: user.id } });
 
-        await this.userRepository.save(user);
+        const random_nums = Math.floor(100000 + Math.random() * 900000);
+
+        const secretCode = this.secretRepository.create({
+            code: random_nums.toString(),
+            user,
+        });
+
+        await this.secretRepository.save(secretCode);
 
         const payload = { sub: user.id, email: user.email };
-        return { access_token: this.jwtService.sign(payload) };
+
+        return {
+            access_token: this.jwtService.sign(payload, {
+                secret: process.env.JWT_SECRET,
+            }),
+            code: random_nums,
+        };
     }
+
+    async codeChecking(codeCheckingDto: CodeCheckingDTO): Promise<{ message: string }> {
+        const secret = await this.secretRepository.findOne({ where: { code: codeCheckingDto.secretCode } });
+        if (!secret) {
+            throw new UnauthorizedException('Code is not found');
+        }
+        secret.check = 'true';
+        await this.secretRepository.save(secret);
+
+        return { message: 'Code verified successfully' };
+
+    }
+
+    async newPassword(dto: NewPasswordDTO): Promise<{ message: string }> {
+        const payload = this.jwtService.verify(dto.token, {
+            secret: process.env.JWT_SECRET,
+        });
+
+        const user = await this.userRepository.findOne({ where: { id: payload.sub } });
+        if (!user) {
+            throw new UnauthorizedException('User not found');
+        }
+
+        const secret = await this.secretRepository.findOne({
+            where: { user: { id: user.id }, check: 'true' },
+        });
+
+        if (!secret) {
+            throw new UnauthorizedException('Code not verified');
+        }
+
+        user.password = await bcrypt.hash(dto.newPassword, 10);
+        await this.userRepository.save(user);
+
+        await this.secretRepository.delete({ id: secret.id });
+
+        return { message: 'Password reset successfully' };
+    }
+
 }

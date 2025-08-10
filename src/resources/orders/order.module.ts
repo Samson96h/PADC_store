@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrdersController } from './order.controller';
 import { OrdersService } from './order.service';
-import { Order } from 'src/entityes/order.entity';
-import { Product } from 'src/entityes/product.entity';
-import { User } from 'src/entityes/user.entity';
+import { Order } from 'src/entities/order.entity';
+import { Product } from 'src/entities/product.entity';
+import { User } from 'src/entities/user.entity';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({

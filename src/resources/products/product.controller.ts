@@ -1,9 +1,11 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ProductsService } from './product.service';
 import { CreateProductDto } from './dto/products.dto';
-import { ProducUpdateDTO } from './dto/products_update.dto';
+import { ProducUpdateDTO } from './dto/upadate-products.dto';
 import { AuthGuard } from 'src/gusrds/auth.guard';
 import { Roles, RolesGuard } from 'src/gusrds/roles.guard';
+import { IdDTO } from 'src/dto/id-param.dto';
+import { UserRole } from 'src/entities/enums/role.enum';
 
 
 @UseGuards(AuthGuard, RolesGuard)
@@ -11,35 +13,35 @@ import { Roles, RolesGuard } from 'src/gusrds/roles.guard';
 export class ProductsController {
     constructor(private readonly productsService: ProductsService) { }
 
-    @Roles('admin', 'manager', 'user')
+    @Roles(UserRole.USER, UserRole.MANAGER, UserRole.ADMIN)
     @Get()
     getAll() {
         return this.productsService.findAll();
     }
 
-    @Roles('admin', 'manager', 'user')
+    @Roles(UserRole.USER, UserRole.MANAGER, UserRole.ADMIN)
     @Get(':id')
-    getOne(@Param('id', ParseIntPipe) id: number) {
-        return this.productsService.findOne(id);
+    getOne(@Param() param: IdDTO) {
+        return this.productsService.findOne(param.id);
     }
 
-    @Roles('admin')
+    @Roles(UserRole.ADMIN)
     @Post()
     @UsePipes(new ValidationPipe({ whitelist: true }))
     create(@Body() dto: CreateProductDto) {
         return this.productsService.create(dto);
     }
 
-    @Roles('admin')
+    @Roles(UserRole.ADMIN)
     @Patch(':id')
     @UsePipes(new ValidationPipe({ skipMissingProperties: true, whitelist: true }))
-    update(@Param('id', ParseIntPipe) id: number, @Body() dto: ProducUpdateDTO) {
-        return this.productsService.update(id, dto);
+    update(@Param() param: IdDTO, @Body() dto: ProducUpdateDTO) {
+        return this.productsService.update(param.id, dto);
     }
 
-    @Roles('admin')
+    @Roles(UserRole.ADMIN)
     @Delete(':id')
-    delete(@Param('id', ParseIntPipe) id: number) {
-        return this.productsService.delete(id);
+    delete(@Param() param: IdDTO) {
+        return this.productsService.delete(param.id);
     }
 }
