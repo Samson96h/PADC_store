@@ -1,5 +1,13 @@
+import { IsNotEmpty, IsOptional, IsNumber } from "class-validator";
+
 export class CategoryDTO {
-    name: string;
-    description?: string;
-    parentId?: number;
+  @IsNotEmpty()
+  name: string;
+
+  @IsNotEmpty()
+  description: string;
+
+  @IsOptional()
+  @IsNumber()
+  parentId?: number;
 }

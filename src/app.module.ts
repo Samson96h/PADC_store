@@ -12,23 +12,31 @@ import { ProductsModule } from './resources/products/product.module';
 import { CategoryModule } from './resources/categories/category.module';
 import { ConfigModule } from '@nestjs/config';
 import { SecretCode } from './entities/secret.entiy';
+import { OrderInfo } from './entities/order-info.entity';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { AllPhotos } from './entities/photos-entity';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads/'),
+      serveRoot: '/public/',
+    }),
     ConfigModule.forRoot({
       isGlobal: true
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5555,
-      username: 'padc_store_db_user',
-      password: 'DsmEntIcKlADaDIaMWor',
-      database: 'padc_store_db',
-      entities: [User, Product, Order, Category,SecretCode],
+      host: process.env.DATABASE_HOST,
+      port: +(process.env.DATABASE_PORT as string),
+      username: process.env.DATABASE_USER,
+      password: process.env.DATABASE_PASSWORD,
+      database: process.env.DATABASE_NAME,
+      entities: [User, Product, Order, Category,SecretCode,OrderInfo,AllPhotos],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([User, Product, Order, Category]),
+    TypeOrmModule.forFeature([User, Product, Order, Category,OrderInfo,AllPhotos]),
     AuthModule,
     OrdersModule,
     ProductsModule,
@@ -37,4 +45,4 @@ import { SecretCode } from './entities/secret.entiy';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

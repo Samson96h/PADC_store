@@ -2,6 +2,7 @@ import { Column, Entity, OneToMany } from 'typeorm';
 import { Base } from './base';
 import { Order } from './order.entity';
 import { UserRole } from './enums/role.enum';
+import { Exclude } from 'class-transformer';
 
 @Entity('users')
 export class User extends Base {
@@ -17,7 +18,11 @@ export class User extends Base {
   @Column()
   email: string;
 
+  @Column({ nullable: true })
+  photo: string;
+
   @Column()
+  @Exclude()
   password: string;
 
   @OneToMany(() => Order, (order) => order.user)
@@ -29,6 +34,4 @@ export class User extends Base {
     default: UserRole.USER,
   })
   role: UserRole;
-
-  secretCodes: any;
 }

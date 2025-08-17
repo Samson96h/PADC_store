@@ -8,10 +8,11 @@ import { UsersModule } from '../users/users.module';
 import { User } from 'src/entities/user.entity';
 import { Order } from 'src/entities/order.entity';
 import { Category } from 'src/entities/category.entity';
+import { AllPhotos } from 'src/entities/photos-entity';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Product, User, Order, Category]),
+        TypeOrmModule.forFeature([Product, User, Order, Category,AllPhotos,]),
         AuthModule,
         UsersModule
     ],

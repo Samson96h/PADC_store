@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsNumber, MaxLength, Min } from 'class-validator';
+import { IsOptional, IsString, IsNumber, MaxLength, Min, IsBoolean } from 'class-validator';
 
 export class ProducUpdateDTO {
   @IsOptional()
@@ -19,4 +19,7 @@ export class ProducUpdateDTO {
   @IsOptional()
   @IsNumber()
   categoryId?: number;
+  
+  @IsBoolean()
+  removeOldPhotos?: boolean;
 }

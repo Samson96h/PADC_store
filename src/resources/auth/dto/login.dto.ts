@@ -4,8 +4,6 @@ export class LoginDTO {
     @IsEmail()
     readonly email: string;
 
-
-
     @IsString()
     @MinLength(6)
     readonly password: string;

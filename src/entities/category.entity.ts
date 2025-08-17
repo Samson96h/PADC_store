@@ -1,5 +1,6 @@
-import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from "typeorm";
 import { Base } from "./base";
+import { AllPhotos } from "./photos-entity";
 
 @Entity('categories')
 export class Category extends Base {
@@ -7,11 +8,15 @@ export class Category extends Base {
     name: string
 
     @Column({ nullable: true })
-    description?: string
+    description: string;
 
-    @ManyToOne(() => Category, (category) => category.children, { nullable: true, onDelete: 'SET NULL' })
-    parent: Category;
+    @ManyToOne(() => Category, category => category.children, { nullable: true })
+    @JoinColumn({ name: 'parentId' })
+    parent: Category | null;
 
     @OneToMany(() => Category, (category) => category.parent)
     children: Category[];
+
+    @OneToMany(() => AllPhotos, (photo) => photo.category, { cascade: true })
+    photos: AllPhotos[];
 }
